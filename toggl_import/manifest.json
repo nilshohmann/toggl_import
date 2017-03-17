@@ -2,7 +2,7 @@
   "manifest_version": 2,
 
   "name": "Soncoso Toggl Import",
-  "description": "Import a single day from toggle to soncoso daily time record.",
+  "description": "Import a single day from toggl to soncoso daily time record.",
   "version": "1.0.0",
   "icons": {
     "16": "images/icon_16.png",
