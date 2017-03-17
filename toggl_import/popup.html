@@ -1,0 +1,107 @@
+<html>
+<head>
+	<style>
+		@import url("http://fonts.googleapis.com/css?family=Sniglet");
+
+		* {margin: 0; padding: 0; box-sizing: border-box;}
+
+		body {
+			padding: 30px 40px;
+			font-family: Sniglet;
+			background: white;
+		}
+
+		.flp div {
+			width: 350px;
+			position: relative;
+			margin-bottom: 30px;
+			display: flex;
+		}
+
+		.flp input, .flp label {
+			width: 100%;
+			height: 42px;
+			display: block;
+
+			font: inherit;
+			font-size: 14px;
+			line-height: 20px;
+			border: 2px solid #999;
+		}
+
+		.flp input {
+			padding: 10px;
+			outline: none;
+			border-radius: 3px;
+			background: white;
+			position: relative;
+		}
+
+		.flp input:focus {
+			border-color: #77C;
+		}
+
+		.flp input[type=button]:hover {
+			background: rgb(239, 243, 247);
+		}
+
+		.flp label {
+			position: absolute;
+			left: 0;
+			top: 0;
+			padding: 10px 8px;
+			border-color: transparent;
+			color: #666;
+			cursor: text;
+		}
+
+		.ch {
+			display: block;
+			float: left;
+			position: relative;
+			background: white;
+		}
+
+		.ch:first-child {
+			padding-left: 2px;
+		}
+
+		.ch:last-child {
+			padding-right: 2px;
+		}
+
+		.focussed {
+			pointer-events: none;
+		}
+	</style>
+
+	<script src="jquery-3.1.1.min.js"></script>
+	<script src="jquery.easing.1.3.min.js"></script>
+	<script src="toggl.js"></script>
+	<script src="popup.js"></script>
+</head>
+<body>
+	<form class="flp">
+		<div>
+			<center style="width: 100%">
+				<img src="images/header.png">
+			</center>
+		</div>
+		<div>
+			<input type="text" id="api_token" style="width: 300px" />
+			<label for="api_token">API Token</label>
+			<input type="button" id="save_api_token" style="width: 42px; margin-left: 8px" value="&#10004" />
+		</div>
+		<div>
+			<input type="button" id="refresh_workspace_id" style="width: 42px; margin-right: 8px" value="&#8634" />
+			<div style="width: 250px; margin: 0px">
+				<input type="text" id="workspace_id" />
+				<label for="workspace_id">Workspace ID</label>
+			</div>
+			<input type="button" id="save_workspace_id" style="width: 42px; margin-left: 8px" value="&#10004" />
+		</div>
+
+		<div id="error_message" style="margin-top: -10px; margin-bottom: 20px; color: red">&nbsp;</div>
+	</form>
+</body>
+</html>
