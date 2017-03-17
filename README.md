@@ -1,6 +1,6 @@
 # Toggl Import
 
-Chrome extension for importing a single day from toggle to soncoso daily time record.
+Chrome extension for importing a single day from toggl to soncoso daily time record.
 
 ## Installation
 
@@ -37,7 +37,7 @@ Chrome extension for importing a single day from toggle to soncoso daily time re
 ## Usage
 
 - Go to soncoso and start the time tracking for a single day
-- On the third page (when asked to enter your time entries) an additional button for the import will appear on the button of the dialog
+- On the third page (when asked to enter your time entries) an additional button for the import will appear on the bottom of the dialog
 - Press it to start the import
 
 ![](screenshots/screenshot_usage_1.png)
