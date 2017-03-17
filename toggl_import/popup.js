@@ -5,40 +5,28 @@ $(document).ready(function() {
 		Animation stuff
 	*/
 	$(".flp label").each(function() {
-		var sop = '<span class="ch">';
-		var scl = '</span>';
-
-		//split the label into single letters and inject span tags around them
-		$(this).html(sop + $(this).html().split("").join(scl+sop) + scl);
-
-		//to prevent space-only spans from collapsing
+		$(this).html('<span class="ch">' + $(this).html().split("").join('</span><span class="ch">') + '</span>');
 		$(".ch:contains(' ')").html("&nbsp;");
 	});
 
-	var d;
-
 	$(".flp input[type=text]").focus(function() {
-		//calculate movement for .ch = half of input height
-		var tm = $(this).outerHeight()/2 *-1 + "px";
+		let tm = $(this).outerHeight()/2 * -1 + "px";
 		$(this).next().addClass("focussed").children().stop(true).each(function(i) {
-			d = i*50; //delay
-			$(this).delay(d).animate({top: tm}, 200, 'easeOutBack');
+			$(this).delay(i * 50).animate({top: tm}, 200, 'easeOutBack');
 		});
 	});
 
 	$(".flp input[type=text]").blur(function() {
-		//animate the label down if content of the input is empty
 		if ($(this).val() == "") {
 			$(this).next().removeClass("focussed").children().stop(true).each(function(i) {
-				d = i*50;
-				$(this).delay(d).animate({top: 0}, 500, 'easeInOutBack');
+				$(this).delay(i * 50).animate({top: 0}, 500, 'easeInOutBack');
 			});
 		}
 	});
 
 
 	/*
-		Initializing
+		Helper
 	*/
 	function setValue(value, textField) {
 		if (!value) { value = ""; }
@@ -47,7 +35,7 @@ $(document).ready(function() {
 
 		var tm = "0px";
 		if (textField.val().length > 0) {
-			textField.next().addClass("focussed")
+			textField.next().addClass("focussed");
 			tm = $(textField).outerHeight()/2 * -1 + "px";
 		}
 
@@ -71,6 +59,10 @@ $(document).ready(function() {
 		}
 	}
 
+
+	/*
+		Initializing
+	*/
 	getValue("api_token").then(apiToken => setValue(apiToken, $("#api_token")));
 	getValue("workspace_id").then(workspaceID => setValue(workspaceID, $("#workspace_id")));
 

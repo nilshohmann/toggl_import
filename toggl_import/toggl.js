@@ -1,4 +1,7 @@
 
+/*
+	Async request
+*/
 requestJsonAsync = function(url, apiToken) {
 	return new Promise(function(resolve, reject) {
 		var request = new XMLHttpRequest();
@@ -20,12 +23,17 @@ requestJsonAsync = function(url, apiToken) {
 	});
 }
 
+
+/*
+	Read value from local storage
+*/
 function getValue(key) {
 	if (arguments.length > 1) {
-		return Promise.all([].slice.call(arguments).map(arg => getValue(arg)))
+		// Return an array with all requested values
+		return Promise.all([].slice.call(arguments).map(arg => getValue(arg)));
 	}
 
-	return new Promise(function(resolve, reject) {
+	return new Promise(resolve => {
 		chrome.storage.local.get(key, function(value) {
 			if (value && value[key]) {
 				resolve(value[key]);
@@ -36,6 +44,10 @@ function getValue(key) {
 	});
 }
 
+
+/*
+	Load workspace id(s)
+*/
 function loadWorkspace(apiToken) {
 	let url = "https://www.toggl.com/api/v8/workspaces";
 
@@ -44,13 +56,16 @@ function loadWorkspace(apiToken) {
 			throw new Error("Failed to load workspaces!");
 		}
 
-		return jsonData[0]["id"];
+		return jsonData.map(e => e["id"]).join(",");
 	});
 }
 
+
+/*
+	Load entries for a given date
+*/
 function loadEntries(apiToken, workspaceID, date) {
-	let url = "https://toggl.com/reports/api/v2/details?"
-		+ "workspace_id="+ workspaceID +"&since="+ date +"&until="+ date +"&user_agent=toggl_import"
+	let url = "https://toggl.com/reports/api/v2/details?workspace_id="+ workspaceID +"&since="+ date +"&until="+ date +"&user_agent=toggl_import";
 
 	return requestJsonAsync(url, apiToken).then(jsonData => {
 		if (!jsonData || !jsonData["data"]) {
