@@ -75,7 +75,7 @@ function loadEntries(apiToken, workspaceID, date) {
 		let entries = jsonData["data"].map(function(entry) {
 			return {
 				'project': entry["project"],
-				'color': entry["project_hex_color"].toUpperCase(),
+				'color': entry["project_hex_color"] ? entry["project_hex_color"].toUpperCase() : "#DDD",
 				'client': entry["client"],
 				'description': entry["description"],
 				'start': new Date(entry["start"]),

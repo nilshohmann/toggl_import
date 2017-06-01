@@ -217,7 +217,7 @@ $(document).ready(function() {
 			}
 
 			entries.forEach(e => {
-				e["fullProjectName"] = e["project"] +" ("+ e["client"] +")";
+				e["fullProjectName"] = e["project"] ? (e["project"] +" ("+ e["client"] +")") : "(No project)";
 			});
 
 			console.log("Found "+ entries.length +" time entries.");
