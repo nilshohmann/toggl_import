@@ -150,6 +150,12 @@ $(document).ready(function() {
 		console.log(currentIndex);
 		if (!currentIndex) { currentIndex = 0; }
 
+		if (entries == null || entries.length == 0) {
+			return new Promise(function(resolve, reject) {
+				reject(new Error("No entries selected."));
+			});
+		}
+
 		function waitForEntry() {
 			return sleep(200).then(() => {
 				if (getRows().length <= currentIndex) {
@@ -159,6 +165,7 @@ $(document).ready(function() {
 				}
 			});
 		}
+
 		function setValue(field, value) {
 			field.val(value);
 			field.focus();
