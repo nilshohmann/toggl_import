@@ -1,12 +1,12 @@
 
 $(document).ready(function() {
-	let extensionId = JSON.stringify(chrome.runtime.id);
+	const extensionId = JSON.stringify(chrome.runtime.id);
 	console.log("Extension "+ extensionId +" loaded!!!");
 
 	/*
 		HTML for project chooser dialog
 	*/
-	let dialogHTML = `<div id="ProjectChooser" class="RadWindow_Metro" unselectable="on" style="position: absolute; width: 260px; left: 50%; top: 50%; z-index: 3024; margin-left: -130px; margin-top: -80px; padding: 1px;">
+	const dialogHTML = `<div id="ProjectChooser" class="RadWindow_Metro" unselectable="on" style="position: absolute; width: 260px; left: 50%; top: 50%; z-index: 3024; margin-left: -130px; margin-top: -80px; padding: 1px;">
 	<table cellspacing="0" cellpadding="0" style="height: 100%; width: 100%;">
 	<tr>
 		<td class="rwTopLeft" style="width: 4px;"></td>
@@ -48,7 +48,7 @@ $(document).ready(function() {
 	/*
 		Show messages for 5 seconds
 	*/
-	let messageSpan = $('<span style="color: red; padding-right: 12px;">&nbsp;</span>');
+	const messageSpan = $('<span style="color: red; padding-right: 12px;">&nbsp;</span>');
 	function showMessage(message) {
 		messageSpan.html(message);
 
@@ -63,7 +63,7 @@ $(document).ready(function() {
 		Format date object in HH:mm format
 	*/
 	function formatDate(date) {
-		let granularity = 5 * 60 * 1000;
+		const granularity = 5 * 60 * 1000;
 		date = new Date((date.getTime() / granularity | 0) * granularity);
 		return ("0" + date.getHours()).substr(-2) +":"+ ("0" + date.getMinutes()).substr(-2);
 	}
@@ -72,7 +72,7 @@ $(document).ready(function() {
 		Find all time entry rows
 	*/
 	function getRows() {
-		let table = $('#ctl00_Content_TimeRecordGrid_ctl00 > tbody');
+		const table = $('#ctl00_Content_TimeRecordGrid_ctl00 > tbody');
 		if (table.length == 0) {
 			table = $('.rgRow').first().parent();
 		}
@@ -100,7 +100,7 @@ $(document).ready(function() {
 			});
 
 			chooserDialog.find("input[type=button]").click(function() {
-				let formData = chooserDialog.find("form").serialize();
+				const formData = chooserDialog.find("form").serialize();
 				let selectedValues = [];
 				if (formData.length > 0) {
 					selectedValues = formData.replace(new RegExp("=", 'g'), "").split("&").map(decodeURIComponent);
@@ -110,7 +110,7 @@ $(document).ready(function() {
 				resolve(selectedValues);
 			});
 
-			let formItems = items.map(createEntry).join('<hr style="margin: 0px; background: black;">');
+			const formItems = items.map(createEntry).join('<hr style="margin: 0px; background: black;">');
 			chooserDialog.find("form").html(formItems);
 
 			$("body").append(chooserDialog);
@@ -121,18 +121,22 @@ $(document).ready(function() {
 		Select projects from time entries
 	*/
 	function selectProjects(entries) {
-		let items = entries.map(function(e) {
+		const projects = entries.map(e => e["fullProjectName"]);
+		const items = entries.map(function(e) {
 			return [e["fullProjectName"], e["color"]];
-		});
-
-		let projects = items.map(e => e[0]);
-		items = items.filter(function(e, i, list) {
+		}).filter(function(e, i) {
 			return projects.indexOf(e[0]) === i;
 		});
 
 		console.log("Found "+ items.length +" projects.");
 
-		return showChooserDialog(items);
+		return getValue("auto_import").then(function(autoImport) {
+			console.log("Auto Import: " + autoImport);
+			if (autoImport && items.length == 1) {
+				return items[0];
+			}
+			return showChooserDialog(items);
+		});
 	}
 
 	/*
@@ -146,15 +150,14 @@ $(document).ready(function() {
 		Insert selected project entries
 	*/
 	function insertEntries(entries, currentIndex) {
-		console.log(entries);
-		console.log(currentIndex);
-		if (!currentIndex) { currentIndex = 0; }
-
 		if (entries == null || entries.length == 0) {
 			return new Promise(function(resolve, reject) {
 				reject(new Error("No entries selected."));
 			});
 		}
+
+		if (!currentIndex) { currentIndex = 0; }
+		console.log("Inserting item " + currentIndex);
 
 		function waitForEntry() {
 			return sleep(200).then(() => {
@@ -177,7 +180,7 @@ $(document).ready(function() {
 		}
 
 		return waitForEntry().then(() => {
-			let inputs = $(getRows()[currentIndex]).find(".riTextBox");
+			const inputs = $(getRows()[currentIndex]).find(".riTextBox");
 			if (inputs.length != 4) {
 				throw new Error("Unable to find table entry for "+ currentIndex);
 			}
@@ -203,7 +206,7 @@ $(document).ready(function() {
 			return;
 		}
 
-		let rows = getRows();
+		const rows = getRows();
 		if (rows.length > 0 && rows.find(".riTextBox").hasClass("riRead")) {
 			showMessage("Some time entries have already been tracked.");
 			return;
@@ -213,7 +216,7 @@ $(document).ready(function() {
 			if (!apiToken) throw new Error("API token not available");
 			if (!workspaceID) throw new Error("Workspace ID not available");
 
-			let selectedDate = $('#Content_JobDatum').html().split(".").reverse().join("-");
+			const selectedDate = $('#Content_JobDatum').html().split(".").reverse().join("-");
 			console.log("Loading time entries for " + selectedDate);
 
 			return loadEntries(apiToken, workspaceID, selectedDate);
@@ -230,11 +233,13 @@ $(document).ready(function() {
 			console.log("Found "+ entries.length +" time entries.");
 
 			selectProjects(entries).then(selectedProjects => {
-				let selectedEntries = entries.filter(e => {
+				const selectedEntries = entries.filter(e => {
 					return selectedProjects.indexOf(e["fullProjectName"]) != -1;
 				}).sort(function(a, b) {
 					return a.start - b.start;
 				});
+
+				console.log("Selected time entries:", selectedEntries);
 
 				insertEntries(selectedEntries).then(() => {
 					console.log("finished.");
@@ -253,9 +258,9 @@ $(document).ready(function() {
 	/*
 		Setup UI
 	*/
-	let button = $('<input class="rbDecorated" type="button" id="toggl_import" value="Import" style="width:100%; padding-right: 0px; padding-left: 20px; background-image: url(data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHhtbG5zOnhsaW5rPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5L3hsaW5rIiB4bWxuczpldj0iaHR0cDovL3d3dy53My5vcmcvMjAwMS94bWwtZXZlbnRzIiB2ZXJzaW9uPSIxLjEiIGJhc2VQcm9maWxlPSJmdWxsIiBoZWlnaHQ9IjUxcHgiIHdpZHRoPSI1MHB4Ij4KPHBhdGggZmlsbD0icmdiKCAyNDMsIDEyLCAyMiApIiBkPSJNMjUsMC45OTkwMDAwMDAwMDAwMiBDMTEuMTkyLDAuOTk5MDAwMDAwMDAwMDIgMCwxMi4xOTAwMDAwMDAwMDAxIDAsMjYgQzAsMzkuODA5IDExLjE5Miw1MSAyNSw1MSBDMzguODA4LDUxIDUwLDM5LjgwOSA1MCwyNiBDNTAsMTIuMTkwMDAwMDAwMDAwMSAzOC44MDgsMC45OTkwMDAwMDAwMDAwMiAyNSwwLjk5OTAwMDAwMDAwMDAyIFpNMjMuMjQ1LDEwLjczMiBDMjMuMjQ1LDEwLjczMiAyNi43NTYsMTAuNzMyIDI2Ljc1NiwxMC43MzIgQzI2Ljc1NiwxMC43MzIgMjYuNzU2LDI4LjE0NiAyNi43NTYsMjguMTQ2IEMyNi43NTYsMjguMTQ2IDIzLjI0NSwyOC4xNDYgMjMuMjQ1LDI4LjE0NiBDMjMuMjQ1LDI4LjE0NiAyMy4yNDUsMTAuNzMyIDIzLjI0NSwxMC43MzIgWk0yNSwzOC44MjA5OTk5OTk5OTk5IEMxOC4yNTUsMzguODIwOTk5OTk5OTk5OSAxMi43ODIsMzMuMzQ4IDEyLjc4MiwyNi42MDIwMDAwMDAwMDAxIEMxMi43ODIsMjAuOTcxIDE2LjU5MSwxNi4yMzM5OTk5OTk5OTk5IDIxLjc3MywxNC44MTQwMDAwMDAwMDAxIEMyMS43NzMsMTQuODE0MDAwMDAwMDAwMSAyMS43NzMsMTguMzY1IDIxLjc3MywxOC4zNjUgQzE4LjQ4MiwxOS42NTU5OTk5OTk5OTk5IDE2LjE1NCwyMi44NTYgMTYuMTU0LDI2LjYwMjAwMDAwMDAwMDEgQzE2LjE1NCwzMS40ODcwMDAwMDAwMDAxIDIwLjExNSwzNS40NSAyNSwzNS40NSBDMjkuODg1LDM1LjQ1IDMzLjg0OCwzMS40ODcwMDAwMDAwMDAxIDMzLjg0OCwyNi42MDIwMDAwMDAwMDAxIEMzMy44NDgsMjIuODU2IDMxLjUxOCwxOS42NTU5OTk5OTk5OTk5IDI4LjIzMSwxOC4zNjUgQzI4LjIzMSwxOC4zNjUgMjguMjMxLDE0LjgxNDAwMDAwMDAwMDEgMjguMjMxLDE0LjgxNDAwMDAwMDAwMDEgQzMzLjQwOSwxNi4yMzM5OTk5OTk5OTk5IDM3LjIxOCwyMC45NzEgMzcuMjE4LDI2LjYwMjAwMDAwMDAwMDEgQzM3LjIxOCwzMy4zNDggMzEuNzQ4LDM4LjgyMDk5OTk5OTk5OTkgMjUsMzguODIwOTk5OTk5OTk5OSBaICIvPgo8L3N2Zz4K); background-size: 16px 16px; background-position: 8px 2px; background-repeat: no-repeat;" tabindex="-1">');
+	const button = $('<input class="rbDecorated" type="button" id="toggl_import" value="Import" style="width:100%; padding-right: 0px; padding-left: 20px; background-image: url(data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHhtbG5zOnhsaW5rPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5L3hsaW5rIiB4bWxuczpldj0iaHR0cDovL3d3dy53My5vcmcvMjAwMS94bWwtZXZlbnRzIiB2ZXJzaW9uPSIxLjEiIGJhc2VQcm9maWxlPSJmdWxsIiBoZWlnaHQ9IjUxcHgiIHdpZHRoPSI1MHB4Ij4KPHBhdGggZmlsbD0icmdiKCAyNDMsIDEyLCAyMiApIiBkPSJNMjUsMC45OTkwMDAwMDAwMDAwMiBDMTEuMTkyLDAuOTk5MDAwMDAwMDAwMDIgMCwxMi4xOTAwMDAwMDAwMDAxIDAsMjYgQzAsMzkuODA5IDExLjE5Miw1MSAyNSw1MSBDMzguODA4LDUxIDUwLDM5LjgwOSA1MCwyNiBDNTAsMTIuMTkwMDAwMDAwMDAwMSAzOC44MDgsMC45OTkwMDAwMDAwMDAwMiAyNSwwLjk5OTAwMDAwMDAwMDAyIFpNMjMuMjQ1LDEwLjczMiBDMjMuMjQ1LDEwLjczMiAyNi43NTYsMTAuNzMyIDI2Ljc1NiwxMC43MzIgQzI2Ljc1NiwxMC43MzIgMjYuNzU2LDI4LjE0NiAyNi43NTYsMjguMTQ2IEMyNi43NTYsMjguMTQ2IDIzLjI0NSwyOC4xNDYgMjMuMjQ1LDI4LjE0NiBDMjMuMjQ1LDI4LjE0NiAyMy4yNDUsMTAuNzMyIDIzLjI0NSwxMC43MzIgWk0yNSwzOC44MjA5OTk5OTk5OTk5IEMxOC4yNTUsMzguODIwOTk5OTk5OTk5OSAxMi43ODIsMzMuMzQ4IDEyLjc4MiwyNi42MDIwMDAwMDAwMDAxIEMxMi43ODIsMjAuOTcxIDE2LjU5MSwxNi4yMzM5OTk5OTk5OTk5IDIxLjc3MywxNC44MTQwMDAwMDAwMDAxIEMyMS43NzMsMTQuODE0MDAwMDAwMDAwMSAyMS43NzMsMTguMzY1IDIxLjc3MywxOC4zNjUgQzE4LjQ4MiwxOS42NTU5OTk5OTk5OTk5IDE2LjE1NCwyMi44NTYgMTYuMTU0LDI2LjYwMjAwMDAwMDAwMDEgQzE2LjE1NCwzMS40ODcwMDAwMDAwMDAxIDIwLjExNSwzNS40NSAyNSwzNS40NSBDMjkuODg1LDM1LjQ1IDMzLjg0OCwzMS40ODcwMDAwMDAwMDAxIDMzLjg0OCwyNi42MDIwMDAwMDAwMDAxIEMzMy44NDgsMjIuODU2IDMxLjUxOCwxOS42NTU5OTk5OTk5OTk5IDI4LjIzMSwxOC4zNjUgQzI4LjIzMSwxOC4zNjUgMjguMjMxLDE0LjgxNDAwMDAwMDAwMDEgMjguMjMxLDE0LjgxNDAwMDAwMDAwMDEgQzMzLjQwOSwxNi4yMzM5OTk5OTk5OTk5IDM3LjIxOCwyMC45NzEgMzcuMjE4LDI2LjYwMjAwMDAwMDAwMDEgQzM3LjIxOCwzMy4zNDggMzEuNzQ4LDM4LjgyMDk5OTk5OTk5OTkgMjUsMzguODIwOTk5OTk5OTk5OSBaICIvPgo8L3N2Zz4K); background-size: 16px 16px; background-position: 8px 2px; background-repeat: no-repeat;" tabindex="-1">');
 	button.click(importToggl);
 
-	let span = $('<span class="RadButton RadButton_Metro rbSkinnedButton rbHovered" style="display:inline-block; width:80px; padding: 0; background-color: #f9f9f9; border: 1px solid #cdcdcd;" tabindex="0"></span>').append(button);
+	const span = $('<span class="RadButton RadButton_Metro rbSkinnedButton rbHovered" style="display:inline-block; width:80px; padding: 0; background-color: #f9f9f9; border: 1px solid #cdcdcd;" tabindex="0"></span>').append(button);
 	$('#ctl00 > table > tbody > tr:nth-child(2) > td').prepend(span).prepend(messageSpan);
 });

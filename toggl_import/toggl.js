@@ -49,7 +49,7 @@ function getValue(key) {
 	Load workspace id(s)
 */
 function loadWorkspace(apiToken) {
-	let url = "https://www.toggl.com/api/v8/workspaces";
+	const url = "https://www.toggl.com/api/v8/workspaces";
 
 	return requestJsonAsync(url, apiToken).then(jsonData => {
 		if (!jsonData || !jsonData.length > 0 || !jsonData[0]["id"]) {
@@ -65,14 +65,14 @@ function loadWorkspace(apiToken) {
 	Load entries for a given date
 */
 function loadEntries(apiToken, workspaceID, date) {
-	let url = "https://toggl.com/reports/api/v2/details?workspace_id="+ workspaceID +"&since="+ date +"&until="+ date +"&user_agent=toggl_import";
+	const url = "https://toggl.com/reports/api/v2/details?workspace_id="+ workspaceID +"&since="+ date +"&until="+ date +"&user_agent=toggl_import";
 
 	return requestJsonAsync(url, apiToken).then(jsonData => {
 		if (!jsonData || !jsonData["data"]) {
 			throw new Error("Failed to load time entries!");
 		}
 
-		let entries = jsonData["data"].map(function(entry) {
+		const entries = jsonData["data"].map(function(entry) {
 			return {
 				'project': entry["project"],
 				'color': entry["project_hex_color"] ? entry["project_hex_color"].toUpperCase() : "#DDD",
