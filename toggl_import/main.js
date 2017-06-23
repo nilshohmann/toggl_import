@@ -1,12 +1,47 @@
 
 $(document).ready(function() {
 	const extensionId = JSON.stringify(chrome.runtime.id);
-	console.log("Extension "+ extensionId +" loaded!!!");
+	console.debug("Extension "+ extensionId +" loaded!!!");
 
 	/*
 		HTML for project chooser dialog
 	*/
 	const dialogHTML = `<div id="ProjectChooser" class="RadWindow_Metro" unselectable="on" style="position: absolute; width: 260px; left: 50%; top: 50%; z-index: 3024; margin-left: -130px; margin-top: -80px; padding: 1px;">
+	<style>
+		.project-prefix {
+			display: none;
+		}
+		.project-prefix + label {
+			position: relative;
+			width: 20px;
+			height: 16px;
+			margin: 8px;
+			float: right;
+			cursor: pointer;
+		}
+		.project-prefix + label:hover {
+			background: #fee;
+		}
+		.project-prefix + label:before {
+			position: absolute;
+			left: 0;
+			top: -2px;
+			content: '[';
+		}
+		.project-prefix + label:after {
+			position: absolute;
+			right: 0;
+			top: -2px;
+			content: ']';
+		}
+		.project-prefix:checked + label span:after {
+			content: '\\2714';
+			position: absolute;
+			top: 0px;
+			left: 5px;
+			font-size: 12px;
+		}
+	</style>
 	<table cellspacing="0" cellpadding="0" style="height: 100%; width: 100%;">
 	<tr>
 		<td class="rwTopLeft" style="width: 4px;"></td>
@@ -84,12 +119,19 @@ $(document).ready(function() {
 		Show the project chooser dialog
 	*/
 	function showChooserDialog(items) {
-		function createEntry([name, color]) {
-			return '<input type="checkbox" id="'+ name +'" name="'+ name +'" value="" style="margin: 8px; width: 20px; height: 16px;"><label for="'+ name +'" style="font-size: 14px; line-height: 20px;"><div style="position: relative; top: 2px; width: 14px; height: 14px; background: '+ color +'; display: inline-flex; margin-right: 6px; border-radius: 7px;"></div>'+ name +'</label>';
+		function createEntry([name, color, projectPrefix]) {
+			const id = name.replace(" ", "_");
+			return '<input type="checkbox" id="'+ id +'" name="'+ name +'" value="" style="margin: 8px; width: 20px; height: 16px;">' + 
+				'<label for="'+ id +'" style="font-size: 14px; line-height: 20px;">' +
+					'<div style="position: relative; top: 2px; width: 14px; height: 14px; background: '+ color +'; display: inline-flex; margin-right: 6px; border-radius: 7px;"></div>' +
+					name +
+				'</label>' +
+				'<input type="checkbox" class="project-prefix" id="'+ id +'_prefix" name="'+ name +'_prefix" value=""'+ (projectPrefix ? ' checked>' : '>') +
+				'<label for="'+ id +'_prefix"><span></span></label>';
 		}
 
 		return new Promise(function(resolve, reject) {
-			console.log("Create project chooser dialog");
+			console.debug("Create project chooser dialog");
 
 			chooserDialog = $(dialogHTML);
 
@@ -105,6 +147,8 @@ $(document).ready(function() {
 				if (formData.length > 0) {
 					selectedValues = formData.replace(new RegExp("=", 'g'), "").split("&").map(decodeURIComponent);
 				}
+
+				console.debug("Selected values:", selectedValues);
 
 				chooserDialog.remove();
 				resolve(selectedValues);
@@ -123,15 +167,15 @@ $(document).ready(function() {
 	function selectProjects(entries) {
 		const projects = entries.map(e => e["fullProjectName"]);
 		const items = entries.map(function(e) {
-			return [e["fullProjectName"], e["color"]];
+			return [e["fullProjectName"], e["color"], e["projectPrefix"]];
 		}).filter(function(e, i) {
 			return projects.indexOf(e[0]) === i;
 		});
 
-		console.log("Found "+ items.length +" projects.");
+		console.debug("Found "+ items.length +" projects.");
 
 		return getValue("auto_import").then(function(autoImport) {
-			console.log("Auto Import: " + autoImport);
+			console.debug("Auto Import: " + autoImport);
 			if (autoImport && items.length == 1) {
 				return items[0];
 			}
@@ -217,38 +261,63 @@ $(document).ready(function() {
 			if (!workspaceID) throw new Error("Workspace ID not available");
 
 			const selectedDate = $('#Content_JobDatum').html().split(".").reverse().join("-");
-			console.log("Loading time entries for " + selectedDate);
+			console.debug("Loading time entries for " + selectedDate);
 
 			return loadEntries(apiToken, workspaceID, selectedDate);
 		}).then(function(entries) {
 			if (entries.length == 0) {
 				throw new Error("No entries found for this date!");
-				return;
 			}
 
 			entries.forEach(e => {
 				e["fullProjectName"] = e["project"] ? (e["project"] +" ("+ e["client"] +")") : "(No project)";
 			});
 
-			console.log("Found "+ entries.length +" time entries.");
+			console.debug("Found "+ entries.length +" time entries.");
 
-			selectProjects(entries).then(selectedProjects => {
-				const selectedEntries = entries.filter(e => {
-					return selectedProjects.indexOf(e["fullProjectName"]) != -1;
-				}).sort(function(a, b) {
-					return a.start - b.start;
+			getValue("project_prefixes").then(projectPrefixes => {
+				console.debug("Project prefixes:", projectPrefixes);
+				if (!projectPrefixes) {
+					projectPrefixes = {};
+				} else {
+					entries.forEach(e => {
+						e["projectPrefix"] = projectPrefixes[e["fullProjectName"]] == true;
+					});
+				}
+
+				return selectProjects(entries).then(selectedProjects => {
+					entries.forEach(e => {
+						const projectPrefix = selectedProjects.indexOf(e["fullProjectName"] + "_prefix") != -1;
+						projectPrefixes[e["fullProjectName"]] = projectPrefix;
+
+						e["projectPrefix"] = projectPrefix;
+						if (projectPrefix) {
+							e["description"] = '['+ e["project"] +'] '+ e["description"];
+						}
+					});
+					chrome.storage.local.set({"project_prefixes": projectPrefixes}, function() {});
+
+					const selectedEntries = entries.filter(e => {
+						return selectedProjects.indexOf(e["fullProjectName"]) != -1;
+					}).sort(function(a, b) {
+						return a.start - b.start;
+					});
+
+					console.debug("Selected time entries:", selectedEntries);
+
+					insertEntries(selectedEntries).then(() => {
+						console.debug("finished.");
+					}).catch(error => {
+						console.error(error);
+						showMessage(error.message);
+					});
+				}, function(error) {
+					if (error) {
+						console.error(error);
+					} else {
+						console.debug("Selection cancelled");
+					}
 				});
-
-				console.log("Selected time entries:", selectedEntries);
-
-				insertEntries(selectedEntries).then(() => {
-					console.log("finished.");
-				}).catch(error => {
-					console.log(error);
-					showMessage(error.message);
-				});
-			}, function() {
-				console.log("Selection cancelled");
 			});
 		}).catch(function(error) {
 			showMessage(error.message);
