@@ -14,7 +14,7 @@ requestJsonAsync = function(url, apiToken) {
 				return
 			}
 
-			console.log(request.responseText);
+			console.debug(request.responseText);
 			var jsonData = JSON.parse(request.responseText);
 			resolve(jsonData);
 		});

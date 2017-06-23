@@ -3,7 +3,7 @@
 
   "name": "Soncoso Toggl Import",
   "description": "Import a single day from toggl to soncoso daily time record.",
-  "version": "1.0.0",
+  "version": "1.0.3",
   "icons": {
     "16": "images/icon_16.png",
     "24": "images/icon_24.png",
