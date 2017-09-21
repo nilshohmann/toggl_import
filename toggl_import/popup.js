@@ -1,10 +1,10 @@
 
-$(document).ready(function() {
+$(function() {
 
 	/*
-		Animation stuff
-	*/
-	$(".flp label").each(function() {
+	 * Animation stuff
+	 */
+	$(".flp .text-label").each(function() {
 		$(this).html('<span class="ch">' + $(this).html().split("").join('</span><span class="ch">') + '</span>');
 		$(".ch:contains(' ')").html("&nbsp;");
 	});
@@ -24,14 +24,13 @@ $(document).ready(function() {
 		}
 	});
 
-
 	/*
-		Helper
-	*/
-	function setValue(value, textField) {
-		if (!value) { value = ""; }
+	 * Helper
+	 */
+	function setText(text, textField) {
+		if (!text) { text = ""; }
 
-		textField.val(value);
+		textField.val(text);
 
 		var tm = "0px";
 		if (textField.val().length > 0) {
@@ -52,28 +51,38 @@ $(document).ready(function() {
 		const errorMessageContainer = $("#error_message");
 		errorMessageContainer.html(message);
 
-		if (message.length > 0) {
+		if (message.length == 0) {
+			errorMessageContainer.addClass("hidden");
+		} else {
+			errorMessageContainer.removeClass("hidden");
+
 			setTimeout(function() {
 				errorMessageContainer.html("");
+				errorMessageContainer.addClass("hidden");
 			}, 5000);
 		}
 	}
 
+	/*
+	 * Initializing
+	 */
+ 	$("#version").text(chrome.runtime.getManifest().version);
+	TogglImport.getValue("api_token", "workspace_id", "direct_import", "auto_import").then(([apiToken, workspaceID, directImport, autoImport]) => {
+		setText(apiToken, $("#api_token"));
+		setText(workspaceID, $("#workspace_id"));
+		$("#direct_import").prop("checked", directImport);
+		if (autoImport) {
+			$("#cancel_auto_import").parent().removeClass("hidden");
+		}
+	});
+
 
 	/*
-		Initializing
-	*/
-	getValue("api_token").then(apiToken => setValue(apiToken, $("#api_token")));
-	getValue("workspace_id").then(workspaceID => setValue(workspaceID, $("#workspace_id")));
-	getValue("auto_import").then(autoImport => $("#auto_import").prop("checked", autoImport));
-
-
-	/*
-		Button actions and change events
-	*/
-	$("#save_api_token").on('click', function() {
+	 * Button actions and change events
+	 */
+	$("#save_api_token").click(function() {
 		const apiToken = $("#api_token").val();
-		chrome.storage.local.set({"api_token": apiToken}, function() {});
+		TogglImport.setValue("api_token", apiToken);
 	});
 
 	$("#api_token").keyup(function(event) {
@@ -83,10 +92,10 @@ $(document).ready(function() {
 		}
 	});
 
-	$("#refresh_workspace_id").on('click', function() {
+	$("#refresh_workspace_id").click(function() {
 		showMessage("");
 		const apiToken = $("#api_token").val();
-		chrome.storage.local.set({"api_token": apiToken}, function() {});
+		TogglImport.setValue("api_token", apiToken);
 
 		if (apiToken.length == 0) {
 			$("#api_token").focus()
@@ -95,15 +104,15 @@ $(document).ready(function() {
 		}
 
 		$("#workspace_id").val("");
-		loadWorkspace(apiToken).then(workspaceID => {
-			setValue(workspaceID, $("#workspace_id"));
-			chrome.storage.local.set({"workspace_id": workspaceID}, function() {});
+		TogglImport.loadWorkspace(apiToken).then(workspaceID => {
+			setText(workspaceID, $("#workspace_id"));
+			TogglImport.setValue("workspace_id", workspaceID);
 		}).catch(showError);
 	});
 
-	$("#save_workspace_id").on('click', function() {
+	$("#save_workspace_id").click(function() {
 		const workspaceID = $("#workspace_id").val();
-		chrome.storage.local.set({"workspace_id": workspaceID}, function() {});
+		TogglImport.setValue("workspace_id", workspaceID);
 	});
 
 	$("#workspace_id").keyup(function(event) {
@@ -112,9 +121,14 @@ $(document).ready(function() {
 			$("#save_workspace_id").click();
 		}
 	});
-	
-	$("#auto_import").change(function() {
+
+	$("#direct_import").change(function() {
 		const checked = $(this).is(":checked");
-		chrome.storage.local.set({"auto_import": checked}, function() {});
+		TogglImport.setValue("direct_import", checked);
+	});
+
+	$("#cancel_auto_import").click(function() {
+		TogglImport.setValue("auto_import", false);
+		$("#cancel_auto_import").parent().addClass("hidden");
 	});
 });

@@ -44,7 +44,7 @@ Chrome extension for importing a single day from toggl to soncoso daily time rec
 ![](screenshots/screenshot_usage_1.png)
 
 - After the time entries for the selected day have been loaded you will be asked to select all projects to import
-- The right checkbox offers the possiblity to include the project name as a prefix for the description of all related entries (e.g. `[Project 1] Ticket 1`), this option will be saved and automatically set in further imports
+- The right checkbox offers the possibility to include the project name as a prefix for the description of all related entries (e.g. `[Project 1] Ticket 1`), this option will be saved and automatically set in further imports
 
 ![](screenshots/screenshot_usage_2.png)
 
@@ -53,3 +53,29 @@ Chrome extension for importing a single day from toggl to soncoso daily time rec
 ![](screenshots/screenshot_usage_3.png)
 
 - You can continue the time tracking as usual
+
+### Automatic import
+
+![](screenshots/screenshot_autoimport.png)
+
+## Changelog
+
+### 1.1.0
+
+- Added semi-automatic import functionality for a complete project
+
+### 1.0.3
+
+- Added support for project prefix for time entries
+
+### 1.0.2
+
+- Added direct import for a single day if only one project is available
+
+### 1.0.1
+
+- Bug fixes
+
+### 1.0.0
+
+- Initial project

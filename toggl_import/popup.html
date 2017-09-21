@@ -1,3 +1,4 @@
+<!DOCTYPE html>
 <html>
 <head>
 	<style>
@@ -6,7 +7,7 @@
 		* {margin: 0; padding: 0; box-sizing: border-box;}
 
 		body {
-			padding: 30px 40px;
+			margin: 20px 30px;
 			font-family: Sniglet;
 			background: white;
 		}
@@ -41,6 +42,10 @@
 			border-color: #77C;
 		}
 
+		.flp input[type=button] {
+			cursor: pointer;
+		}
+
 		.flp input[type=button]:hover {
 			background: rgb(239, 243, 247);
 		}
@@ -73,6 +78,12 @@
 		.focussed {
 			pointer-events: none;
 		}
+
+		.hidden {
+			height: 0px !important;
+			overflow: hidden;
+			margin: 0px !important;
+		}
 	</style>
 
 	<script src="jquery-3.1.1.min.js"></script>
@@ -81,31 +92,36 @@
 	<script src="popup.js"></script>
 </head>
 <body>
-	<form class="flp">
+	<div class="flp">
 		<div>
 			<center style="width: 100%">
 				<img src="images/header.png">
+				<span id="version" style="position: absolute; bottom: 0;"></span>
 			</center>
 		</div>
 		<div>
 			<input type="text" id="api_token" style="width: 300px" />
-			<label for="api_token">API Token</label>
-			<input type="button" id="save_api_token" style="width: 42px; margin-left: 8px" value="&#10004" />
+			<label for="api_token" class="text-label">API Token</label>
+			<input type="button" id="save_api_token" style="width: 42px; margin-left: 8px" value="&#10004;" />
 		</div>
 		<div>
-			<input type="button" id="refresh_workspace_id" style="width: 42px; margin-right: 8px" value="&#8634" />
+			<input type="button" id="refresh_workspace_id" style="width: 42px; margin-right: 8px" value="&#8634;" />
 			<div style="width: 250px; margin: 0px">
 				<input type="text" id="workspace_id" />
-				<label for="workspace_id">Workspace ID</label>
+				<label for="workspace_id" class="text-label">Workspace ID</label>
 			</div>
-			<input type="button" id="save_workspace_id" style="width: 42px; margin-left: 8px" value="&#10004" />
+			<input type="button" id="save_workspace_id" style="width: 42px; margin-left: 8px" value="&#10004;" />
 		</div>
 		<div>
-  			<input type="checkbox" id="auto_import" style="height: 24px; cursor: pointer;" />
-  			<label for="auto_import" style="height: 24px; cursor: pointer; padding: 2px 0 2px 24px;">Automatically import days with single project entry</label>
+				<input type="checkbox" id="direct_import" style="height: 24px; cursor: pointer;" />
+				<label for="direct_import" style="height: 24px; cursor: pointer; padding: 2px 0 2px 24px;">Automatically import days with single project entry</label>
 		</div>
 
-		<div id="error_message" style="margin-top: -10px; margin-bottom: 20px; color: red">&nbsp;</div>
+		<div id="error_message" class="hidden" style="margin-top: -10px; margin-bottom: 20px; color: red">&nbsp;</div>
+
+		<div class="hidden">
+			<input type="button" id="cancel_auto_import" value="&#9995; &nbsp; Cancel auto import" />
+		</div>
 	</form>
 </body>
 </html>
