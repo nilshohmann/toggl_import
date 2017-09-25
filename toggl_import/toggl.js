@@ -100,14 +100,10 @@ var TogglImport = window.TogglImport || {};
 					'fullProjectName': entry["project"] ? (entry["project"] +" ("+ entry["client"] +")") : "(No project)",
 					'color': entry["project_hex_color"] ? entry["project_hex_color"].toUpperCase() : "#DDD",
 					'description': entry["description"],
-					'start': new Date(entry["start"]),
-					'end': new Date(entry["end"])
+					'start': new Date(entry["start"]).getTime(),
+					'end': new Date(entry["end"]).getTime()
 				};
 			});
-
-			if (entries.length == 0) {
-				throw new Error("No entries found for this date!");
-			}
 
 			return entries;
 		});

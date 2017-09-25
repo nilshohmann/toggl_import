@@ -29,15 +29,15 @@
 
   "content_scripts": [{
     "matches" : [ "https://portal.lmis.de/*" ],
-    "js" : ["jquery-3.1.1.min.js", "toggl.js", "project_import.js"],
+    "js" : ["jquery-3.1.1.min.js", "toggl.js", "project_list.js"],
     "all_frames": false
   },{
     "matches" : [ "https://portal.lmis.de/Popup/DetailsDialog.aspx*" ],
-    "js" : ["jquery-3.1.1.min.js", "toggl.js", "ui.js", "project_details.js"],
+    "js" : ["jquery-3.1.1.min.js", "toggl.js", "ui.js", "util.js", "project_details.js"],
     "all_frames": true
   },{
     "matches" : [ "https://portal.lmis.de/Workflow/CreateMultipleTimeRecordForDay/*" ],
-    "js" : ["jquery-3.1.1.min.js", "toggl.js", "ui.js", "main.js"],
+    "js" : ["jquery-3.1.1.min.js", "toggl.js", "ui.js", "util.js", "main.js"],
     "all_frames": true
   }]
 }

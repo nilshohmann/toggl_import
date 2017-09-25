@@ -2,7 +2,7 @@
 $(function() {
 	const extensionId = JSON.stringify(chrome.runtime.id);
 	const version = chrome.runtime.getManifest().version;
-	console.debug("Extension " + extensionId +" (" + version + "): project_import loaded!!!");
+	console.debug("Extension " + extensionId +" (" + version + "): project_list loaded!!!");
 
 	function getStoredProjects() {
 		return TogglImport.getValue("projects").then(projects => {

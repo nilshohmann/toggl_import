@@ -1,6 +1,13 @@
-var ImportUI = window.ImportUI || {};
+
+var TogglImport = window.TogglImport || {};
+TogglImport.ui = TogglImport.ui || {};
 
 (function() {
+
+	/*
+	 * Raw data for the toggl icon
+	 */
+	const toggl_icon = `data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHhtbG5zOnhsaW5rPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5L3hsaW5rIiB4bWxuczpldj0iaHR0cDovL3d3dy53My5vcmcvMjAwMS94bWwtZXZlbnRzIiB2ZXJzaW9uPSIxLjEiIGJhc2VQcm9maWxlPSJmdWxsIiBoZWlnaHQ9IjUxcHgiIHdpZHRoPSI1MHB4Ij4KPHBhdGggZmlsbD0icmdiKCAyNDMsIDEyLCAyMiApIiBkPSJNMjUsMC45OTkwMDAwMDAwMDAwMiBDMTEuMTkyLDAuOTk5MDAwMDAwMDAwMDIgMCwxMi4xOTAwMDAwMDAwMDAxIDAsMjYgQzAsMzkuODA5IDExLjE5Miw1MSAyNSw1MSBDMzguODA4LDUxIDUwLDM5LjgwOSA1MCwyNiBDNTAsMTIuMTkwMDAwMDAwMDAwMSAzOC44MDgsMC45OTkwMDAwMDAwMDAwMiAyNSwwLjk5OTAwMDAwMDAwMDAyIFpNMjMuMjQ1LDEwLjczMiBDMjMuMjQ1LDEwLjczMiAyNi43NTYsMTAuNzMyIDI2Ljc1NiwxMC43MzIgQzI2Ljc1NiwxMC43MzIgMjYuNzU2LDI4LjE0NiAyNi43NTYsMjguMTQ2IEMyNi43NTYsMjguMTQ2IDIzLjI0NSwyOC4xNDYgMjMuMjQ1LDI4LjE0NiBDMjMuMjQ1LDI4LjE0NiAyMy4yNDUsMTAuNzMyIDIzLjI0NSwxMC43MzIgWk0yNSwzOC44MjA5OTk5OTk5OTk5IEMxOC4yNTUsMzguODIwOTk5OTk5OTk5OSAxMi43ODIsMzMuMzQ4IDEyLjc4MiwyNi42MDIwMDAwMDAwMDAxIEMxMi43ODIsMjAuOTcxIDE2LjU5MSwxNi4yMzM5OTk5OTk5OTk5IDIxLjc3MywxNC44MTQwMDAwMDAwMDAxIEMyMS43NzMsMTQuODE0MDAwMDAwMDAwMSAyMS43NzMsMTguMzY1IDIxLjc3MywxOC4zNjUgQzE4LjQ4MiwxOS42NTU5OTk5OTk5OTk5IDE2LjE1NCwyMi44NTYgMTYuMTU0LDI2LjYwMjAwMDAwMDAwMDEgQzE2LjE1NCwzMS40ODcwMDAwMDAwMDAxIDIwLjExNSwzNS40NSAyNSwzNS40NSBDMjkuODg1LDM1LjQ1IDMzLjg0OCwzMS40ODcwMDAwMDAwMDAxIDMzLjg0OCwyNi42MDIwMDAwMDAwMDAxIEMzMy44NDgsMjIuODU2IDMxLjUxOCwxOS42NTU5OTk5OTk5OTk5IDI4LjIzMSwxOC4zNjUgQzI4LjIzMSwxOC4zNjUgMjguMjMxLDE0LjgxNDAwMDAwMDAwMDEgMjguMjMxLDE0LjgxNDAwMDAwMDAwMDEgQzMzLjQwOSwxNi4yMzM5OTk5OTk5OTk5IDM3LjIxOCwyMC45NzEgMzcuMjE4LDI2LjYwMjAwMDAwMDAwMDEgQzM3LjIxOCwzMy4zNDggMzEuNzQ4LDM4LjgyMDk5OTk5OTk5OTkgMjUsMzguODIwOTk5OTk5OTk5OSBaICIvPgo8L3N2Zz4K`;
 
 	/*
 	 * HTML for project chooser dialog
@@ -100,71 +107,110 @@ var ImportUI = window.ImportUI || {};
 	/*
 	 * Create a project entry for the chooser dialog
 	 */
-	function createSelectionEntry([name, color, projectPrefix]) {
-		const id = name.replace(" ", "_");
-		return '<input type="checkbox" id="'+ id +'" name="'+ name +'" value="" style="margin: 8px; width: 20px; height: 16px;">' +
-			'<label for="'+ id +'" style="font-size: 14px; line-height: 20px;" title="' + name + '">' +
-				'<div style="position: relative; top: 2px; width: 14px; height: 14px; background: '+ color +'; display: inline-flex; margin-right: 6px; border-radius: 7px;"></div>' +
-				'<span style="display: inline-block; width: 256px; white-space: nowrap; text-overflow: ellipsis; overflow: hidden; vertical-align: middle;">' + name + '</span>' +
+	function createSelectionEntry(entry) {
+		const id = entry.name.replace(" ", "_");
+		return '<input type="checkbox" id="'+ id +'" name="'+ entry.name +'" value="" style="margin: 8px; width: 20px; height: 16px;">' +
+			'<label for="'+ id +'" style="font-size: 14px; line-height: 20px;" title="' + entry.name + '">' +
+				'<div style="position: relative; top: 2px; width: 14px; height: 14px; background: '+ entry.color +'; display: inline-flex; margin-right: 6px; border-radius: 7px;"></div>' +
+				'<span style="display: inline-block; width: 256px; white-space: nowrap; text-overflow: ellipsis; overflow: hidden; vertical-align: middle;">' + entry.name + '</span>' +
 			'</label>' +
-			'<input type="checkbox" class="project-prefix" id="'+ id +'_prefix" name="'+ name +'_prefix" value=""'+ (projectPrefix ? ' checked>' : '>') +
+			'<input type="checkbox" class="project-prefix" id="'+ id +'_prefix" name="'+ entry.name +'_prefix" value=""'+ (entry.prefix ? ' checked>' : '>') +
 			'<label for="'+ id +'_prefix" title="Add prefix for this project"><span></span></label>';
+	}
+
+	/*
+	 * Creates the button for the daily import
+	 */
+	TogglImport.ui.buildImportButton = function() {
+		return $('<input class="rbDecorated" type="button" id="toggl_import" value="Import" style="width:100%; padding-right: 0px; padding-left: 20px; background-image: url(' + toggl_icon + '); background-size: 16px 16px; background-position: 8px 2px; background-repeat: no-repeat;" tabindex="-1">');
+	}
+
+	/*
+	 * Creates the button for the automatic import
+	 */
+	TogglImport.ui.buildAutoImportButton = function() {
+		return $('<li class="rtbBtn" style="display: inline-block;"><a title="Automatic import" class="rtbWrap" href="#"><span class="rtbMid"><span class="rtbIn"><img alt="Auto import" src="' + toggl_icon + '" class="rtbIcon" width="20"></span><span class="rtbIn">Auto import</span></span></a></li>');
 	}
 
 	/*
 	 * Indicates whether the project chooser dialog is currently shown
 	 */
-	ImportUI.chooserDialogIsShown = function() {
+	TogglImport.ui.chooserDialogIsShown = function() {
 		return $("#ProjectChooser").length > 0;
 	};
 
 	/*
 	 * Show the project chooser dialog
 	 */
-	ImportUI.showChooserDialog = function(items) {
+	TogglImport.ui.showChooserDialog = function(projectQuery, multipleDays) {
 		console.debug("Create project chooser dialog");
 
-		function setupDateSelection(parent) {
-			const dateSelection = $(dateSelectionHtml);
-			parent.prepend(dateSelection);
-		}
+		return new Promise(function(resolve, reject) {
+			const chooserDialog = $(dialogHTML);
+			const form = chooserDialog.find("form");
 
-		function setupDialog() {
-			return new Promise(function(resolve, reject) {
-				const chooserDialog = $(dialogHTML);
-
-				chooserDialog.find(".rwTitlebar a").click(function(event) {
-					event.preventDefault();
-					chooserDialog.remove();
-					reject();
-				});
-
-				chooserDialog.find("input[type=button]").click(function() {
-					const formData = chooserDialog.find("form").serialize();
-					let selectedValues = [];
-					if (formData.length > 0) {
-						selectedValues = formData.replace(new RegExp("=", 'g'), "").split("&").map(decodeURIComponent);
-					}
-
-					console.debug("Selected values:", selectedValues);
-
-					chooserDialog.remove();
-					resolve(selectedValues);
-				});
-
-				const form = chooserDialog.find("form");
-				if (items.length == 0) {
+			let projects = [];
+			function buildProjectList(p) {
+				projects = p;
+				if (projects.length == 0) {
 					form.html(noProjectsHtml);
 				} else {
-					const formItems = items.map(createSelectionEntry).join('<hr style="margin: 0px; background: black;">');
+					const formItems = projects.map(createSelectionEntry).join('<hr style="margin: 0px; background: black;">');
 					form.html(formItems);
 				}
-				// setupDateSelection(form.parent());
+			}
 
-				$("body").append(chooserDialog);
+			function onError(error) {
+				chooserDialog.remove();
+				reject(error);
+			}
+
+			function buildDateSelection(currentWeekDate) {
+				const dateSelection = $(dateSelectionHtml);
+				dateSelection.find("#StartDate").val(currentWeekDate[0]);
+				dateSelection.find("#EndDate").val(currentWeekDate[1]);
+
+				dateSelection.find("#UpdateEntries").click(function () {
+					const beginDate = dateSelection.find("#StartDate").val();
+					const endDate = dateSelection.find("#EndDate").val();
+					projectQuery(beginDate, endDate).then(buildProjectList, onError);
+				});
+				return dateSelection;
+			}
+
+			chooserDialog.find(".rwTitlebar a").click(function(event) {
+				event.preventDefault();
+				onError();
 			});
-		}
 
-		return setupDialog();
+			chooserDialog.find("input[type=button]").click(function() {
+				const formData = chooserDialog.find("form").serialize();
+				let selectedValues = [];
+				if (formData.length > 0) {
+					selectedValues = formData.replace(new RegExp("=", 'g'), "").split("&").map(decodeURIComponent);
+				}
+
+				projects.forEach(p => {
+					p["prefix"] = selectedValues.indexOf(p["name"] + "_prefix") != -1;
+					p["selected"] = selectedValues.indexOf(p["name"]) != -1;
+				});
+
+				chooserDialog.remove();
+				resolve(projects);
+			});
+
+			console.log("ProjectQuery:", typeof(projectQuery));
+
+			if (typeof(projectQuery) == "function") {
+				const currentWeekDate = TogglImport.util.currentWeekRange();
+				form.parent().prepend(buildDateSelection(currentWeekDate));
+				projectQuery(currentWeekDate[0], currentWeekDate[1]).then(buildProjectList, onError);
+			} else {
+				buildProjectList(projectQuery);
+			}
+
+
+			$("body").append(chooserDialog);
+		});
 	};
 })();

@@ -6,35 +6,79 @@ $(function() {
 
 	TogglImport.setValue("auto_import", false);
 
-	function currentWeekRange() {
-		function formatDate(date) {
-			return date.getFullYear() +"-"+ ("0" + (d.getMonth()+1)).substr(-2) +"-"+ ("0" + date.getDate()).substr(-2);
+	function selectProjectsToImport() {
+		if (TogglImport.ui.chooserDialogIsShown()) {
+			return;
 		}
 
-		function addDays(date, days) {
-			var d = new Date(date.valueOf());
-			d.setDate(d.getDate() + days);
-			return d;
-		}
+		let currentEntries = [];
 
-		const now = new Date();
-		const monday = addDays(now, -(now.getDay()+6)%7)
-		const sunday = addDays(monday, 6);
+		const query = function(beginDate, endDate) {
+			console.debug("Fetching entries from " + beginDate + " until " + endDate);
 
-		return [formatDate(monday), formatDate(sunday)];
+			return TogglImport.loadEntries(beginDate, endDate).then(entries => {
+				console.debug("Found "+ entries.length +" time entries.");
+				currentEntries = entries;
+
+				return TogglImport.util.getProjects(entries);
+			});
+		};
+
+		TogglImport.ui.showChooserDialog(query, true)
+		.then(TogglImport.util.updateProjectPrefixes)
+		.then(projects => {
+			const selectedProjects = projects.filter(e => !!e.selected);
+			console.log("Selected projects:", selectedProjects);
+
+			const selectedEntries = currentEntries.filter(e => {
+				return selectedProjects.find(p => p.name == e["fullProjectName"]);
+			}).map(e => {
+				if (selectedProjects.find(p => !!p.prefix && p.name == e["fullProjectName"])) {
+					e["description"] = '['+ e["project"] +'] '+ e["description"];
+				}
+				return e;
+			}).sort(function(a, b) {
+				return a.start - b.start;
+			});
+
+			console.debug("Selected time entries:", selectedEntries);
+			if (selectedEntries.length > 0) {
+				startAutoImport(selectedEntries);
+			}
+		}).catch(error => {
+			if (error) {
+				console.error(error);
+			} else {
+				console.debug("Selection cancelled");
+			}
+		});
 	}
 
-	function selectProjectsToImport() {
-    ImportUI.showChooserDialog([]);
+	/*
+	 * Splits a list of time entries by their date
+	 */
+	function splitEntriesByDates(entries) {
+		entries.forEach(e => e["date"] = TogglImport.util.formatDate(e.start));
+		return entries.sort(function(a, b) {
+			return a.start - b.start;
+		}).reduce(function(dict, x) {
+	    if (!dict[x["date"]]) { dict[x["date"]] = []; }
+	    dict[x["date"]].push(x);
+	    return dict;
+	  }, {});
 	}
 
 	/*
 	 * Start the automatic import
 	 */
-	function startAutoImport() {
+	function startAutoImport(entries) {
 		console.log("Starting auto import...");
 
-		TogglImport.setValue("auto_import", true);
+		entries = splitEntriesByDates(entries);
+		entries["dates"] = Object.keys(entries).sort();
+		entries["currentIndex"] = 0;
+
+		TogglImport.setValue("auto_import", entries);
 		$(".rtbSlide .RadToolBarDropDown ul li a span:contains(Tageszeiterfassung)").click();
 	}
 
@@ -43,7 +87,7 @@ $(function() {
 	 */
 	function setupAutoImportButton() {
 		const seperator = $('<li class="rtbSeparator"><span class="rtbText"></span></li>');
-		const button = $('<li class="rtbBtn" style="display: inline-block;"><a title="Automatic import" class="rtbWrap" href="#"><span class="rtbMid"><span class="rtbIn"><img alt="Auto import" src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHhtbG5zOnhsaW5rPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5L3hsaW5rIiB4bWxuczpldj0iaHR0cDovL3d3dy53My5vcmcvMjAwMS94bWwtZXZlbnRzIiB2ZXJzaW9uPSIxLjEiIGJhc2VQcm9maWxlPSJmdWxsIiBoZWlnaHQ9IjUxcHgiIHdpZHRoPSI1MHB4Ij4KPHBhdGggZmlsbD0icmdiKCAyNDMsIDEyLCAyMiApIiBkPSJNMjUsMC45OTkwMDAwMDAwMDAwMiBDMTEuMTkyLDAuOTk5MDAwMDAwMDAwMDIgMCwxMi4xOTAwMDAwMDAwMDAxIDAsMjYgQzAsMzkuODA5IDExLjE5Miw1MSAyNSw1MSBDMzguODA4LDUxIDUwLDM5LjgwOSA1MCwyNiBDNTAsMTIuMTkwMDAwMDAwMDAwMSAzOC44MDgsMC45OTkwMDAwMDAwMDAwMiAyNSwwLjk5OTAwMDAwMDAwMDAyIFpNMjMuMjQ1LDEwLjczMiBDMjMuMjQ1LDEwLjczMiAyNi43NTYsMTAuNzMyIDI2Ljc1NiwxMC43MzIgQzI2Ljc1NiwxMC43MzIgMjYuNzU2LDI4LjE0NiAyNi43NTYsMjguMTQ2IEMyNi43NTYsMjguMTQ2IDIzLjI0NSwyOC4xNDYgMjMuMjQ1LDI4LjE0NiBDMjMuMjQ1LDI4LjE0NiAyMy4yNDUsMTAuNzMyIDIzLjI0NSwxMC43MzIgWk0yNSwzOC44MjA5OTk5OTk5OTk5IEMxOC4yNTUsMzguODIwOTk5OTk5OTk5OSAxMi43ODIsMzMuMzQ4IDEyLjc4MiwyNi42MDIwMDAwMDAwMDAxIEMxMi43ODIsMjAuOTcxIDE2LjU5MSwxNi4yMzM5OTk5OTk5OTk5IDIxLjc3MywxNC44MTQwMDAwMDAwMDAxIEMyMS43NzMsMTQuODE0MDAwMDAwMDAwMSAyMS43NzMsMTguMzY1IDIxLjc3MywxOC4zNjUgQzE4LjQ4MiwxOS42NTU5OTk5OTk5OTk5IDE2LjE1NCwyMi44NTYgMTYuMTU0LDI2LjYwMjAwMDAwMDAwMDEgQzE2LjE1NCwzMS40ODcwMDAwMDAwMDAxIDIwLjExNSwzNS40NSAyNSwzNS40NSBDMjkuODg1LDM1LjQ1IDMzLjg0OCwzMS40ODcwMDAwMDAwMDAxIDMzLjg0OCwyNi42MDIwMDAwMDAwMDAxIEMzMy44NDgsMjIuODU2IDMxLjUxOCwxOS42NTU5OTk5OTk5OTk5IDI4LjIzMSwxOC4zNjUgQzI4LjIzMSwxOC4zNjUgMjguMjMxLDE0LjgxNDAwMDAwMDAwMDEgMjguMjMxLDE0LjgxNDAwMDAwMDAwMDEgQzMzLjQwOSwxNi4yMzM5OTk5OTk5OTk5IDM3LjIxOCwyMC45NzEgMzcuMjE4LDI2LjYwMjAwMDAwMDAwMDEgQzM3LjIxOCwzMy4zNDggMzEuNzQ4LDM4LjgyMDk5OTk5OTk5OTkgMjUsMzguODIwOTk5OTk5OTk5OSBaICIvPgo8L3N2Zz4K" class="rtbIcon" width="20"></span><span class="rtbIn">Auto import</span></span></a></li>');
+		const button = TogglImport.ui.buildAutoImportButton();
 
 		button.click(selectProjectsToImport);
 		button.hover(function() {
