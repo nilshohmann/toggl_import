@@ -56,13 +56,27 @@ Chrome extension for importing a single day from toggl to soncoso daily time rec
 
 ### Automatic import
 
+- Open the project details view on the project overview page
+- Click on the "auto import" button
+
 ![](screenshots/screenshot_autoimport.png)
+
+- Projects for the current week are preloaded, to select a different time range enter the begin and end date and click on the refresh button
+- Select all projects to import for the selected soncoso project and click on continue
+- The import will automatically proceed to the third page and all time entries for this day will be filled in the form
+- Validate the data and continue the time tracking manually (including the next confirm page)
+- The import page will then automatically closed and restarted with the next day to import if available
+
+- The automatic import can be cancelled in the extension popup
+
+![](screenshots/screenshot_cancel_autoimport.png)
 
 ## Changelog
 
 ### 1.1.0
 
 - Added semi-automatic import functionality for a complete project
+- Further improvements
 
 ### 1.0.3
 
