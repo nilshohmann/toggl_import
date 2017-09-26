@@ -1,5 +1,6 @@
 
 $(function() {
+
 	const extensionId = JSON.stringify(chrome.runtime.id);
 	const version = chrome.runtime.getManifest().version;
 	console.debug("Extension " + extensionId +" (" + version + "): project_list loaded!!!");
@@ -18,7 +19,7 @@ $(function() {
 		});
 	}
 
-	getStoredProjects().then(projects => console.log("Stored projects: ", projects));
+	getStoredProjects().then(projects => console.debug("Stored projects: ", projects));
 
 	/*
 	 * Listen on content changes
@@ -39,7 +40,8 @@ $(function() {
 			};
 		}).splice(0);
 
-		console.log("Found projects: ", projects);
+		console.debug("Found projects: ", projects);
 		TogglImport.setValue("projects", JSON.stringify(projects));
 	});
+
 });

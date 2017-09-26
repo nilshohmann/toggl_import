@@ -9,7 +9,7 @@
     "24": "images/icon_24.png",
     "32": "images/icon_32.png",
     "128": "images/icon_128.png"
-   },
+  },
 
   "browser_action": {
     "default_icon": {
@@ -28,10 +28,6 @@
   ],
 
   "content_scripts": [{
-    "matches" : [ "https://portal.lmis.de/*" ],
-    "js" : ["jquery-3.1.1.min.js", "toggl.js", "project_list.js"],
-    "all_frames": false
-  },{
     "matches" : [ "https://portal.lmis.de/Popup/DetailsDialog.aspx*" ],
     "js" : ["jquery-3.1.1.min.js", "toggl.js", "ui.js", "util.js", "project_details.js"],
     "all_frames": true

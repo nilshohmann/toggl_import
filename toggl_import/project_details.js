@@ -28,7 +28,7 @@ $(function() {
 		.then(TogglImport.util.updateProjectPrefixes)
 		.then(projects => {
 			const selectedProjects = projects.filter(e => !!e.selected);
-			console.log("Selected projects:", selectedProjects);
+			console.debug("Selected projects:", selectedProjects);
 
 			const selectedEntries = currentEntries.filter(e => {
 				return selectedProjects.find(p => p.name == e["fullProjectName"]);
@@ -72,14 +72,50 @@ $(function() {
 	 * Start the automatic import
 	 */
 	function startAutoImport(entries) {
-		console.log("Starting auto import...");
+		console.debug("Starting auto import...");
 
 		entries = splitEntriesByDates(entries);
 		entries["dates"] = Object.keys(entries).sort();
-		entries["currentIndex"] = 0;
 
 		TogglImport.setValue("auto_import", entries);
-		$(".rtbSlide .RadToolBarDropDown ul li a span:contains(Tageszeiterfassung)").click();
+		TogglImport.setValue("auto_import_status", "next");
+		setTimeout(listenForNextStep, 100);
+	}
+
+	function listenForNextStep() {
+		TogglImport.getValue("auto_import_status", "auto_import").then(([status, autoImport]) => {
+			if (!autoImport) {
+				console.debug("Auto import:", "Import finished.");
+				return;
+			}
+			if (!autoImport["dates"] || !autoImport["dates"].length) {
+				console.debug("Auto import:", "No elements for auto import.");
+				return;
+			}
+
+			if (status == "next") {
+				TogglImport.setValue("auto_import_status", "waiting");
+
+				const currentIndex = autoImport["currentIndex"];
+				if (!currentIndex) {
+					console.debug("Auto import:", "Starting import at first date.");
+					autoImport["currentIndex"] = 0;
+				} else if (autoImport["dates"].length > currentIndex + 1) {
+					console.debug("Auto import:", "Continuing import at next date.");
+					autoImport["currentIndex"] = currentIndex + 1;
+				} else {
+					console.debug("Auto import:", "Last date reached, finishing.");
+					TogglImport.setValue("auto_import", false);
+					alert("Automatic import finished.");
+					return;
+				}
+
+				TogglImport.setValue("auto_import", autoImport);
+				$(".rtbSlide .RadToolBarDropDown ul li a span:contains(Tageszeiterfassung)").click();
+			}
+
+			setTimeout(listenForNextStep, 1000);
+		});
 	}
 
 	/*
@@ -98,5 +134,7 @@ $(function() {
 		$("#DialogToolBar ul.rtbUL").append(seperator).append(button);
 	}
 
-	setupAutoImportButton();
+	if ($(".rtbSlide .RadToolBarDropDown").length) {
+		setupAutoImportButton();
+	}
 });

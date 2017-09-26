@@ -27,7 +27,6 @@ var TogglImport = window.TogglImport || {};
 		});
 	}
 
-
 	/*
 	 * Read value from local storage
 	 */
@@ -48,7 +47,6 @@ var TogglImport = window.TogglImport || {};
 		});
 	}
 
-
 	/*
 	 * Set value to local storage
 	 */
@@ -59,7 +57,6 @@ var TogglImport = window.TogglImport || {};
 			chrome.storage.local.set(data, resolve);
 		});
 	}
-
 
 	/*
 	 * Load workspace id(s)
@@ -75,7 +72,6 @@ var TogglImport = window.TogglImport || {};
 			return jsonData.map(e => e["id"]).join(",");
 		});
 	}
-
 
 	/*
 	 * Load entries for a given date
@@ -108,4 +104,5 @@ var TogglImport = window.TogglImport || {};
 			return entries;
 		});
 	}
+
 })();

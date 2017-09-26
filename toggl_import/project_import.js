@@ -69,7 +69,7 @@ $(function() {
 		}
 
 		if (!currentIndex) { currentIndex = 0; }
-		console.log("Inserting item " + currentIndex);
+		console.debug("Inserting item " + currentIndex);
 
 		function waitForEntry() {
 			return TogglImport.util.sleep(200).then(() => {
@@ -128,12 +128,12 @@ $(function() {
 			console.debug("Found "+ entries.length +" time entries.");
 
 			return TogglImport.util.getProjects(entries).then(projects => {
-				console.log("Projects", projects);
+				console.debug("Projects", projects);
 
 				return selectProjects(projects);
 			}).then(projects => {
 				const selectedProjects = projects.filter(e => !!e.selected);
-				console.log("Selected projects:", selectedProjects);
+				console.debug("Selected projects:", selectedProjects);
 
 				const selectedEntries = entries.filter(e => {
 					return selectedProjects.find(p => p.name == e["fullProjectName"]);
@@ -179,7 +179,7 @@ $(function() {
 			throw "Project id not recognized."
 		}
 		const projectID = idParam[0].substr(4);
-		console.log("ProjectID: ", projectID);
+		console.debug("ProjectID: ", projectID);
 	}
 
 	/*
@@ -187,7 +187,7 @@ $(function() {
 	 */
 	TogglImport.getValue("auto_import").then(autoImport => {
 		const page = location.pathname.substr(location.pathname.lastIndexOf("/")+1);
-		console.log("Auto import enabled: " + autoImport);
+		console.debug("Auto import: ", autoImport);
 
 		// Initial page
 		if (page === "Page1.aspx") {
@@ -198,9 +198,9 @@ $(function() {
 		// Import date selection
 		} else if (page === "Page2.aspx") {
 			if (autoImport) {
-				var date = autoImport.dates[autoImport.currentIndex].split(".").reverse().join(".");
+				var date = autoImport.dates[autoImport.currentIndex].split("-").reverse().join(".");
 				setInputValue($("#ctl00_Content_Date_dateInput"), date);
-				$("#ctl00_NextBtn_input").click();
+				setTimeout(function() { $("#ctl00_NextBtn_input").click(); }, 0);
 			}
 
 		// Time entry record
@@ -208,9 +208,9 @@ $(function() {
 			setupImportButton();
 
 			if (autoImport) {
-				var date = autoImport.dates[autoImport.currentIndex].split(".").reverse().join(".");
+				var date = autoImport.dates[autoImport.currentIndex];
 				var entries = autoImport[date];
-				console.log("Entries:", entries);
+				console.debug("Entries:", entries);
 				insertEntries(entries);
 			}
 
@@ -222,7 +222,9 @@ $(function() {
 		} else if (page == "Finish.aspx") {
 			// Go to next day
 			if (autoImport) {
-				// Send event to trigger next import
+				$("#ctl00_CloseBtn_input").click();
+				// Set flag to trigger import for next date
+				TogglImport.setValue("auto_import_status", "next");
 			}
 		}
 	});
