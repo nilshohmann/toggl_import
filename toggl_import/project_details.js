@@ -93,11 +93,16 @@ $(function() {
 				return;
 			}
 
-			if (status == "next") {
+			if (status != "next") {
+				setTimeout(listenForNextStep, 1000);
+				return;
+			}
+
+			TogglImport.util.sleep(200).then(() => {
 				TogglImport.setValue("auto_import_status", "waiting");
 
 				const currentIndex = autoImport["currentIndex"];
-				if (!currentIndex) {
+				if (currentIndex === null || currentIndex === undefined) {
 					console.debug("Auto import:", "Starting import at first date.");
 					autoImport["currentIndex"] = 0;
 				} else if (autoImport["dates"].length > currentIndex + 1) {
@@ -106,15 +111,14 @@ $(function() {
 				} else {
 					console.debug("Auto import:", "Last date reached, finishing.");
 					TogglImport.setValue("auto_import", false);
-					alert("Automatic import finished.");
+					setTimeout(function() { alert("Automatic import finished."); }, 200);
 					return;
 				}
 
 				TogglImport.setValue("auto_import", autoImport);
 				$(".rtbSlide .RadToolBarDropDown ul li a span:contains(Tageszeiterfassung)").click();
-			}
-
-			setTimeout(listenForNextStep, 1000);
+				setTimeout(listenForNextStep, 1000);
+			});
 		});
 	}
 

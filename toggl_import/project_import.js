@@ -192,7 +192,7 @@ $(function() {
 		// Initial page
 		if (page === "Page1.aspx") {
 			if (autoImport) {
-				$("#ctl00_NextBtn_input").click();
+				setTimeout(function() { $("#ctl00_NextBtn_input").click(); }, 200);
 			}
 
 		// Import date selection
@@ -200,7 +200,7 @@ $(function() {
 			if (autoImport) {
 				var date = autoImport.dates[autoImport.currentIndex].split("-").reverse().join(".");
 				setInputValue($("#ctl00_Content_Date_dateInput"), date);
-				setTimeout(function() { $("#ctl00_NextBtn_input").click(); }, 0);
+				setTimeout(function() { $("#ctl00_NextBtn_input").click(); }, 200);
 			}
 
 		// Time entry record
@@ -208,10 +208,16 @@ $(function() {
 			setupImportButton();
 
 			if (autoImport) {
+				const rows = getRows();
+				if (rows.length > 0 && rows.find(".riTextBox").hasClass("riRead")) {
+					showMessage("Some time entries have already been tracked.");
+					return;
+				}
+
 				var date = autoImport.dates[autoImport.currentIndex];
 				var entries = autoImport[date];
 				console.debug("Entries:", entries);
-				insertEntries(entries);
+				setTimeout(function() { insertEntries(entries); }, 200);
 			}
 
 		// Cofirm page
@@ -222,9 +228,17 @@ $(function() {
 		} else if (page == "Finish.aspx") {
 			// Go to next day
 			if (autoImport) {
-				$("#ctl00_CloseBtn_input").click();
 				// Set flag to trigger import for next date
-				TogglImport.setValue("auto_import_status", "next");
+				TogglImport.getValue("auto_import_status").then(status => {
+					if (status == "next") {
+						return;
+					}
+
+					setTimeout(function() {
+						$("#ctl00_CloseBtn_input").click();
+						TogglImport.setValue("auto_import_status", "next");
+					}, 200);
+				});
 			}
 		}
 	});
