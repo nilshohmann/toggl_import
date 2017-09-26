@@ -1,6 +1,6 @@
 # Toggl Import
 
-Chrome extension for importing a single day from toggl to soncoso daily time record.
+Chrome extension for importing time entries from toggl to soncoso daily time record.
 
 ## Installation
 
