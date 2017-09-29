@@ -79,16 +79,17 @@ var TogglImport = window.TogglImport || {};
 	TogglImport.loadEntries = function(sinceDate, untilDate) {
 		if (!untilDate) untilDate = sinceDate;
 
-		return TogglImport.getValue("api_token", "workspace_id").then(([apiToken, workspaceID]) => {
-			if (!apiToken) throw new Error("API token not available");
-			if (!workspaceID) throw new Error("Workspace ID not available");
+		function requestEntries(apiToken, workspaceID, page) {
+			if (!page) page = 1;
+			const url = "https://toggl.com/reports/api/v2/details?workspace_id="+ workspaceID +"&since="+ sinceDate +"&until="+ untilDate +"&user_agent=toggl_import&page=" + page;
 
-			const url = "https://toggl.com/reports/api/v2/details?workspace_id="+ workspaceID +"&since="+ sinceDate +"&until="+ untilDate +"&user_agent=toggl_import";
+			return requestJsonAsync(url, apiToken).then(jsonData => {
+				if (!jsonData || !jsonData["data"]) throw new Error("Failed to load time entries!");
+				return jsonData;
+			});
+		}
 
-			return requestJsonAsync(url, apiToken);
-		}).then(jsonData => {
-			if (!jsonData || !jsonData["data"]) throw new Error("Failed to load time entries!");
-
+		function parseResponse(jsonData) {
 			const entries = jsonData["data"].map(function(entry) {
 				return {
 					'project': entry["project"],
@@ -102,6 +103,25 @@ var TogglImport = window.TogglImport || {};
 			});
 
 			return entries;
+		}
+
+		return TogglImport.getValue("api_token", "workspace_id").then(([apiToken, workspaceID]) => {
+			if (!apiToken) throw new Error("API token not available");
+			if (!workspaceID) throw new Error("Workspace ID not available");
+
+			return requestEntries(apiToken, workspaceID).then(jsonData => {
+				const pageCount = Math.ceil(jsonData["total_count"] / jsonData["per_page"]);
+				const firstPageEntries = parseResponse(jsonData);
+				if (pageCount <= 1) {
+					return firstPageEntries;
+				}
+
+				const pages = Array.apply(null, { length: pageCount-1 }).map((e,i) => i+2);
+				return Promise.all(pages.map(page => requestEntries(apiToken, workspaceID, page)))
+				.then(morePages => {
+					return [].concat.apply(firstPageEntries, morePages.map(data => parseResponse(data)));
+				});
+			});
 		});
 	}
 
