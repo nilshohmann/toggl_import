@@ -51,6 +51,7 @@ TogglImport.util = TogglImport.util || {};
   TogglImport.util.getProjects = function(entries) {
     return TogglImport.getValue("project_prefixes").then(projectPrefixes => {
       console.debug("Project prefixes:", projectPrefixes);
+      if (!projectPrefixes) projectPrefixes = {};
 
   		const projectNames = entries.map(e => e["fullProjectName"]);
   		return entries.filter((e, i) => {
@@ -70,6 +71,7 @@ TogglImport.util = TogglImport.util || {};
    */
   TogglImport.util.updateProjectPrefixes = function(projects) {
     return TogglImport.getValue("project_prefixes").then(projectPrefixes => {
+      if (!projectPrefixes) projectPrefixes = {};
       projects.forEach(p => projectPrefixes[p["name"]] = p["prefix"]);
       chrome.storage.local.set({"project_prefixes": projectPrefixes}, function() {});
       return projects;
