@@ -4,6 +4,11 @@ $(function() {
 	const version = chrome.runtime.getManifest().version;
 	console.debug("Extension " + extensionId +" (" + version + "): project_details loaded!!!");
 
+	console.log("top window:", window.top);
+	if (window.top !== window) {
+		window.top.postMessage("Testnachricht", location.origin);
+	}
+
 	TogglImport.setValue("auto_import", false);
 
 	function selectProjectsToImport() {
@@ -77,11 +82,59 @@ $(function() {
 		entries = splitEntriesByDates(entries);
 		entries["dates"] = Object.keys(entries).sort();
 
-		TogglImport.setValue("auto_import", entries);
-		TogglImport.setValue("auto_import_status", "next");
-		setTimeout(listenForNextStep, 100);
+		//TogglImport.setValue("auto_import", entries);
+
+	  function waitForNextMessage(event) {
+			console.log("received message:", event);
+			if (event.origin !== location.origin) return;
+
+			if (event.data === "next") {
+		    event.source.postMessage("finish", event.origin);
+				goToNextDate();
+			}
+	  }
+
+	  window.addEventListener("message", waitForNextMessage, false);
 	}
 
+	function goToNextDate() {
+		TogglImport.getValue("auto_import").then(autoImport => {
+			if (!autoImport) {
+				console.debug("Auto import:", "Import finished.");
+				return;
+			}
+			if (!autoImport["dates"] || !autoImport["dates"].length) {
+				console.debug("Auto import:", "No elements for auto import.");
+				return;
+			}
+
+			const recordPopupIsOpen = window.top.$(".RadWindow:visible iframe")
+				.filter((i,e) => e.src.indexOf("/Workflow/CreateMultipleTimeRecordForDay/") >= 0)
+				.length > 0;
+
+			TogglImport.util.sleep(200).then(() => {
+				TogglImport.setValue("auto_import_status", "waiting");
+
+				const currentIndex = autoImport["currentIndex"];
+				if (currentIndex === null || currentIndex === undefined) {
+					console.debug("Auto import:", "Starting import at first date.");
+					autoImport["currentIndex"] = 0;
+				} else if (autoImport["dates"].length > currentIndex + 1) {
+					console.debug("Auto import:", "Continuing import at next date.");
+					autoImport["currentIndex"] = currentIndex + 1;
+				} else {
+					console.debug("Auto import:", "Last date reached, finishing.");
+					TogglImport.setValue("auto_import", false);
+					setTimeout(function() { alert("Automatic import finished."); }, 200);
+					return;
+				}
+
+				TogglImport.setValue("auto_import", autoImport);
+				$(".rtbSlide .RadToolBarDropDown ul li a span:contains(Tageszeiterfassung)").click();
+				setTimeout(listenForNextStep, 1000);
+			});
+		});
+	}
 	function listenForNextStep() {
 		TogglImport.getValue("auto_import_status", "auto_import").then(([status, autoImport]) => {
 			if (!autoImport) {

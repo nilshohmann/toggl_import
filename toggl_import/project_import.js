@@ -37,7 +37,7 @@ $(function() {
 		return TogglImport.getValue("direct_import").then(directImport => {
 			console.debug("Direct import: " + directImport);
 			if (directImport && projects.length == 1) {
-				return projects[0];
+				return projects.map(p => { p.selected = true; return p; });
 			}
 			return TogglImport.ui.showChooserDialog(projects)
 				.then(TogglImport.util.updateProjectPrefixes);
@@ -132,6 +132,7 @@ $(function() {
 
 				return selectProjects(projects);
 			}).then(projects => {
+				console.log(projects);
 				const selectedProjects = projects.filter(e => !!e.selected);
 				console.debug("Selected projects:", selectedProjects);
 
@@ -226,19 +227,21 @@ $(function() {
 
 		// Finish page
 		} else if (page == "Finish.aspx") {
-			// Go to next day
 			if (autoImport) {
-				// Set flag to trigger import for next date
-				TogglImport.getValue("auto_import_status").then(status => {
-					if (status == "next") {
-						return;
-					}
+				setTimeout(function() {
+				  window.addEventListener("message", function(event) {
+						console.log("received message:", event);
+						if (event.origin !== location.origin) return;
+						if (event.data !== "finish") return;
 
-					setTimeout(function() {
 						$("#ctl00_CloseBtn_input").click();
-						TogglImport.setValue("auto_import_status", "next");
-					}, 200);
-				});
+				  }, false);
+
+					// Send next message to details popup
+					window.top.$(".RadWindow:visible iframe")
+						.filter((i,e) => e.src.indexOf("/Popup/DetailsDialog.aspx") >= 0)
+						.each((i,e) => e.contentWindow.postMessage("next", location.origin));
+				}, 200);
 			}
 		}
 	});
